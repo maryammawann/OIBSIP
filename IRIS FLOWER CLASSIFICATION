@@ -1,1 +1,74 @@
+import pandas as pd
 
+df = pd.read_csv("/content/Iris.csv")
+df.tail()
+
+df.info()
+df.describe()
+df['Species'].value_counts()
+
+import seaborn as sns
+import matplotlib.pyplot as plt
+
+# Pairplot to see feature distribution
+sns.pairplot(df, hue="Species")
+plt.show()
+
+from sklearn.preprocessing import LabelEncoder
+
+le = LabelEncoder()
+df["Species"] = le.fit_transform(df["Species"])  # Convert species to 0, 1, 2
+
+from sklearn.model_selection import train_test_split
+
+X = df.drop("Species", axis=1)  # Features
+y = df["Species"]               # Target variable
+
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+
+from sklearn.tree import DecisionTreeClassifier
+
+model = DecisionTreeClassifier()
+model.fit(X_train, y_train)
+
+from sklearn.metrics import accuracy_score, classification_report
+
+y_pred = model.predict(X_test)  # Make predictions
+print("Accuracy:", accuracy_score(y_test, y_pred))
+print("Classification Report:\n", classification_report(y_test, y_pred))
+
+from sklearn.metrics import accuracy_score, classification_report, confusion_matrix
+cm = confusion_matrix(y_test, y_pred)
+plt.figure(figsize=(6, 5))
+sns.heatmap(cm, annot=True, fmt="d", cmap="Blues", xticklabels=le.classes_, yticklabels=le.classes_)
+plt.xlabel("Predicted Label")
+plt.ylabel("True Label")
+plt.title("Confusion Matrix")
+plt.show()
+
+from sklearn.model_selection import GridSearchCV
+
+params = {'max_depth': [3, 5, 10], 'criterion': ['gini', 'entropy']}
+grid = GridSearchCV(DecisionTreeClassifier(), param_grid=params, cv=5)
+grid.fit(X_train, y_train)
+
+print("Best Parameters:", grid.best_params_)
+
+import joblib
+
+joblib.dump(model, "iris_classifier.pkl")  # Save model
+
+# Load and use later
+loaded_model = joblib.load("iris_classifier.pkl")
+#loaded_model.predict([[1,5.1, 3.5, 1.4, 0.2]])  # Example input
+input_data = pd.DataFrame([[146, 6.7, 3.0, 5.2, 2.3]], 
+                         columns=['Id', 'SepalLengthCm', 'SepalWidthCm', 'PetalLengthCm', 'PetalWidthCm'])  
+
+prediction = loaded_model.predict(input_data)
+print(prediction)
+
+import joblib
+
+# Save the trained model to a file
+joblib.dump(model, "iris_classifier.pkl")
+print("Model saved successfully!")
